@@ -1631,7 +1631,7 @@ heap_page_create(rb_objspace_t *objspace)
 	page = heap_page_allocate(objspace);
 	method = "allocate";
     }
-    if (0) fprintf(stderr, "heap_page_create: %s - %p, heap_allocated_pages: %d, heap_allocated_pages: %d, tomb->total_pages: %d\n",
+    if (1) fprintf(stderr, "heap_page_create: %s - %p, heap_allocated_pages: %d, heap_allocated_pages: %d, tomb->total_pages: %d\n",
 		   method, (void *)page, (int)heap_pages_sorted_length, (int)heap_allocated_pages, (int)heap_tomb->total_pages);
     return page;
 }
@@ -1690,7 +1690,7 @@ heap_extend_pages(rb_objspace_t *objspace, size_t free_slots, size_t total_slots
 
 	next_used = (size_t)(f * used);
 
-	if (0) {
+	if (1) {
 	    fprintf(stderr,
 		    "free_slots(%8"PRIuSIZE")/total_slots(%8"PRIuSIZE")=%1.2f,"
 		    " G(%1.2f), f(%1.2f),"
@@ -3570,7 +3570,7 @@ gc_page_sweep(rb_objspace_t *objspace, rb_heap_t *heap, struct heap_page *sweep_
 	record->empty_objects += empty_slots;
     }
 #endif
-    if (0) fprintf(stderr, "gc_page_sweep(%d): total_slots: %d, freed_slots: %d, empty_slots: %d, final_slots: %d\n",
+    if (1) fprintf(stderr, "gc_page_sweep(%d): total_slots: %d, freed_slots: %d, empty_slots: %d, final_slots: %d\n",
 		   (int)rb_gc_count(),
 		   (int)sweep_page->total_slots,
 		   freed_slots, empty_slots, final_slots);
@@ -3627,7 +3627,7 @@ gc_mode_transition(rb_objspace_t *objspace, enum gc_mode mode)
       case gc_mode_sweeping: GC_ASSERT(mode == gc_mode_none); break;
     }
 #endif
-    if (0) fprintf(stderr, "gc_mode_transition: %s->%s\n", gc_mode_name(gc_mode(objspace)), gc_mode_name(mode));
+    if (1) fprintf(stderr, "gc_mode_transition: %s->%s\n", gc_mode_name(gc_mode(objspace)), gc_mode_name(mode));
     gc_mode_set(objspace, mode);
 }
 
@@ -5626,7 +5626,7 @@ gc_marks_step(rb_objspace_t *objspace, int slots)
 	    gc_sweep(objspace);
 	}
     }
-    if (0) fprintf(stderr, "objspace->marked_slots: %d\n", (int)objspace->marked_slots);
+    if (1) fprintf(stderr, "objspace->marked_slots: %d\n", (int)objspace->marked_slots);
 }
 #endif
 
@@ -5729,7 +5729,7 @@ gc_marks(rb_objspace_t *objspace, int full_mark)
 static void
 gc_report_body(int level, rb_objspace_t *objspace, const char *fmt, ...)
 {
-    if (level <= RGENGC_DEBUG) {
+    if (level <= 1000) {
 	char buf[1024];
 	FILE *out = stderr;
 	va_list args;
@@ -6345,7 +6345,7 @@ gc_reset_malloc_info(rb_objspace_t *objspace)
 	    }
 	}
 
-	if (0) {
+	if (1) {
 	    if (old_limit != malloc_limit) {
 		fprintf(stderr, "[%"PRIuSIZE"] malloc_limit: %"PRIuSIZE" -> %"PRIuSIZE"\n",
 			rb_gc_count(), old_limit, malloc_limit);
@@ -6370,7 +6370,7 @@ gc_reset_malloc_info(rb_objspace_t *objspace)
 	    }
 	}
 
-	if (0) fprintf(stderr, "%d\t%d\t%u\t%u\t%d\n",
+	if (1) fprintf(stderr, "%d\t%d\t%u\t%u\t%d\n",
 		       (int)rb_gc_count(),
 		       (int)objspace->rgengc.need_major_gc,
 		       (unsigned int)objspace->rgengc.oldmalloc_increase,
@@ -7821,8 +7821,10 @@ objspace_malloc_increase(rb_objspace_t *objspace, void *mem, size_t new_size, si
 
     if (type == MEMOP_TYPE_MALLOC) {
       retry:
+        fprintf(stderr, "malloc_increase:%d.malloc_limit:%d\n", malloc_increase, malloc_limit);
 	if (malloc_increase > malloc_limit && ruby_native_thread_p() && !dont_gc) {
 	    if (ruby_thread_has_gvl_p() && is_lazy_sweeping(heap_eden)) {
+                fprintf(stderr, "call gc_rest from objspace_malloc_increase");
 		gc_rest(objspace); /* gc_rest can reduce malloc_increase */
 		goto retry;
 	    }
